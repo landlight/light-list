@@ -29,6 +29,9 @@ export default function TodoPage({ user }: TodoPageProps) {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [task, setTask] = useState("");
   const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingTask, setEditingTask] = useState<string>("");
+
   useEffect(() => {
     if (user) {
       const fetchTodos = async () => {
@@ -95,6 +98,36 @@ export default function TodoPage({ user }: TodoPageProps) {
     }
   };
 
+  const startEditing = (id: number, task: string) => {
+    setEditingId(id);
+    setEditingTask(task);
+  };
+
+  const cancelEditing = () => {
+    setEditingId(null);
+    setEditingTask("");
+  };
+
+  const saveEditing = async (id: number) => {
+    const { data, error } = await supabase
+      .from("todos")
+      .update({ task: editingTask })
+      .eq("id", id)
+      .select("*");
+
+    if (error) {
+      console.error("Error updating todo:", error.message);
+    } else {
+      setTodos(
+        todos.map((todo) =>
+          todo.id === id ? { ...todo, task: editingTask } : todo
+        )
+      );
+      setEditingId(null);
+      setEditingTask("");
+    }
+  };
+
   if (loading) {
     return <Typography>Loading...</Typography>;
   }
@@ -114,7 +147,7 @@ export default function TodoPage({ user }: TodoPageProps) {
       </Button>
       <List>
         {todos.map((todo) => (
-          <ListItem key={todo.id} button>
+          <ListItem key={todo.id}>
             <Checkbox
               edge="start"
               checked={todo.is_complete}
@@ -122,13 +155,31 @@ export default function TodoPage({ user }: TodoPageProps) {
               disableRipple
               onChange={() => updateTodo(todo.id, !todo.is_complete)}
             />
-            <ListItemText
-              primary={todo.task.toUpperCase()}
-              secondary={`Created at: ${format(
-                new Date(todo.inserted_at),
-                "MMMM dd, yyyy HH:mm"
-              )}`}
-            />
+            {editingId === todo.id ? (
+              <TextField
+                variant="outlined"
+                value={editingTask}
+                onChange={(e) => setEditingTask(e.target.value)}
+                onBlur={() => saveEditing(todo.id)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    saveEditing(todo.id);
+                  } else if (e.key === "Escape") {
+                    cancelEditing();
+                  }
+                }}
+                fullWidth
+              />
+            ) : (
+              <ListItemText
+                primary={todo.task.toUpperCase()}
+                secondary={`Created at: ${format(
+                  new Date(todo.inserted_at),
+                  "MMMM dd, yyyy HH:mm"
+                )}`}
+                onClick={() => startEditing(todo.id, todo.task)}
+              />
+            )}
             <Button
               color="primary"
               onClick={() => deleteTodo(todo.id)}
