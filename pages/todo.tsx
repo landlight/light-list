@@ -7,8 +7,7 @@ import Button from "@mui/material/Button";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemText from "@mui/material/ListItemText";
-// import ListItemSecondaryAction from "@mui/material/ListItemSecondaryAction";
-// import IconButton from "@mui/material/IconButton";
+import { format } from "date-fns";
 import Checkbox from "@mui/material/Checkbox";
 import Typography from "@mui/material/Typography";
 
@@ -85,6 +84,16 @@ export default function TodoPage({ user }: TodoPageProps) {
     }
   };
 
+  const deleteTodo = async (id: number) => {
+    const { data, error } = await supabase.from("todos").delete().eq("id", id);
+
+    if (error) {
+      console.error("Error deleting todo:", error.message);
+    } else {
+      setTodos(todos.filter((todo) => todo.id !== id));
+    }
+  };
+
   if (loading) {
     return <Typography>Loading...</Typography>;
   }
@@ -113,11 +122,19 @@ export default function TodoPage({ user }: TodoPageProps) {
               onChange={() => updateTodo(todo.id, !todo.is_complete)}
             />
             <ListItemText
-              primary={todo.task}
-              secondary={`Completed: ${
-                todo.is_complete ? "Yes" : "No"
-              }, Inserted at: ${todo.inserted_at}`}
+              primary={todo.task.toUpperCase()}
+              secondary={`Created at: ${format(
+                new Date(todo.inserted_at),
+                "MMMM dd, yyyy HH:mm"
+              )}`}
             />
+            <Button
+              color="primary"
+              onClick={() => deleteTodo(todo.id)}
+              variant="text"
+            >
+              Delete
+            </Button>
           </ListItem>
         ))}
       </List>
