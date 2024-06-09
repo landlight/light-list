@@ -1,41 +1,46 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import { supabase } from "../utils/supabaseClient";
+import Container from "@mui/material/Container";
+import TextField from "@mui/material/TextField";
+import Button from "@mui/material/Button";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import ListItemText from "@mui/material/ListItemText";
+import Typography from "@mui/material/Typography";
 
 interface Todo {
   id: number;
   user_id: string;
   task: string;
-  is_completed: boolean;
+  is_complete: boolean;
   inserted_at: string;
 }
 
-export default function TodoPage() {
+interface TodoPageProps {
+  user: any;
+}
+
+export default function TodoPage({ user }: TodoPageProps) {
   const router = useRouter();
-  const [user, setUser] = useState<any>(null);
   const [todos, setTodos] = useState<Todo[]>([]);
   const [task, setTask] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchUserAndTodos = async () => {
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
-      if (userError || !user) {
+    const fetchTodos = async () => {
+      if (!user) {
         router.push("/login");
         return;
       }
-      setUser(user);
 
-      const { data: todos, error: todosError } = await supabase
+      const { data: todos, error } = await supabase
         .from("todos")
         .select("*")
         .eq("user_id", user.id);
 
-      if (todosError) {
-        console.error(todosError.message);
+      if (error) {
+        console.error(error.message);
       } else {
         setTodos(todos);
       }
@@ -43,8 +48,8 @@ export default function TodoPage() {
       setLoading(false);
     };
 
-    fetchUserAndTodos();
-  }, [router]);
+    fetchTodos();
+  }, [user, router]);
 
   const addTodo = async () => {
     const { data, error } = await supabase
@@ -61,28 +66,37 @@ export default function TodoPage() {
   };
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <Typography>Loading...</Typography>;
   }
 
   return (
-    <div>
-      <h1>Todo List</h1>
-      <input
-        type="text"
+    <Container>
+      <Typography variant="h4" gutterBottom>
+        Todo List
+      </Typography>
+      <TextField
+        label="Todo task"
+        variant="outlined"
         value={task}
         onChange={(e) => setTask(e.target.value)}
-        placeholder="Todo task"
+        fullWidth
+        margin="normal"
       />
-      <button onClick={addTodo}>Add Todo</button>
-      <ul>
+      <Button variant="contained" color="primary" onClick={addTodo} fullWidth>
+        Add Todo
+      </Button>
+      <List>
         {todos.map((todo) => (
-          <li key={todo.id}>
-            <h3>{todo.task}</h3>
-            <p>Completed: {todo.is_completed ? "Yes" : "No"}</p>
-            <p>Inserted at: {todo.inserted_at}</p>
-          </li>
+          <ListItem key={todo.id}>
+            <ListItemText
+              primary={todo.task}
+              secondary={`Completed: ${
+                todo.is_complete ? "Yes" : "No"
+              }, Inserted at: ${todo.inserted_at}`}
+            />
+          </ListItem>
         ))}
-      </ul>
-    </div>
+      </List>
+    </Container>
   );
 }

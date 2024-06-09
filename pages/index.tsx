@@ -1,3 +1,6 @@
+import { useEffect } from "react";
+import { useRouter } from "next/router";
+import { supabase } from "../utils/supabaseClient";
 import Head from "next/head";
 import Image from "next/image";
 import { Inter } from "next/font/google";
@@ -6,6 +9,29 @@ import styles from "@/styles/Home.module.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export default function Home() {
+  const router = useRouter();
+
+  useEffect(() => {
+    const checkUser = async () => {
+      const {
+        data: { session },
+        error,
+      } = await supabase.auth.getSession();
+
+      if (error) {
+        console.error("Error fetching session:", error.message);
+      }
+
+      if (session) {
+        router.push("/todo");
+      } else {
+        router.push("/login");
+      }
+    };
+
+    checkUser();
+  }, [router]);
+
   return (
     <>
       <Head>
