@@ -86,6 +86,11 @@ export default function TodoPage({ user }: TodoPageProps) {
         onChange={(e) => setTask(e.target.value)}
         fullWidth
         margin="normal"
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            handleAddTodo();
+          }
+        }}
       />
       <Button
         variant="contained"
