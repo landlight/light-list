@@ -1,5 +1,6 @@
 import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
+import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import { supabase } from "../utils/supabaseClient";
 import { useRouter } from "next/router";
@@ -21,13 +22,16 @@ export default function Header({ user }: HeaderProps) {
   };
 
   return (
-    <AppBar position="static">
+    <AppBar position="static" color="primary">
       <Toolbar>
-        {user && (
+        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+          LIGHT LIST
+        </Typography>
+        {user ? (
           <Button color="inherit" onClick={handleLogout}>
             Logout
           </Button>
-        )}
+        ) : null}
       </Toolbar>
     </AppBar>
   );

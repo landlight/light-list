@@ -3,6 +3,8 @@ import { supabase } from "../utils/supabaseClient";
 import type { AppProps } from "next/app";
 import { User } from "@supabase/supabase-js";
 import Layout from "../components/Layout";
+import { ThemeProvider } from "@mui/material/styles";
+import theme from "@/theme";
 
 function MyApp({ Component, pageProps }: AppProps) {
   const [user, setUser] = useState<User | null>(null);
@@ -34,9 +36,11 @@ function MyApp({ Component, pageProps }: AppProps) {
   }, []);
 
   return (
-    <Layout user={user}>
-      <Component {...pageProps} user={user} />
-    </Layout>
+    <ThemeProvider theme={theme}>
+      <Layout user={user}>
+        <Component {...pageProps} user={user} />
+      </Layout>
+    </ThemeProvider>
   );
 }
 
