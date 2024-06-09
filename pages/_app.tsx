@@ -5,9 +5,11 @@ import { User } from "@supabase/supabase-js";
 import Layout from "../components/Layout";
 import { ThemeProvider } from "@mui/material/styles";
 import theme from "@/theme";
+import { useRouter } from "next/router";
 
 function MyApp({ Component, pageProps }: AppProps) {
   const [user, setUser] = useState<User | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     const getSession = async () => {
@@ -19,6 +21,9 @@ function MyApp({ Component, pageProps }: AppProps) {
         console.error("Error fetching session:", error.message);
       } else {
         setUser(session?.user ?? null);
+        if (!session) {
+          router.push("/login");
+        }
       }
     };
 
@@ -27,13 +32,16 @@ function MyApp({ Component, pageProps }: AppProps) {
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setUser(session?.user ?? null);
+        if (!session) {
+          router.push("/login");
+        }
       }
     );
 
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, []);
+  }, [router]);
 
   return (
     <ThemeProvider theme={theme}>

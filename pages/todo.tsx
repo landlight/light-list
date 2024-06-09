@@ -17,6 +17,7 @@ interface Todo {
   task: string;
   is_complete: boolean;
   inserted_at: string;
+  deleted_at: string;
 }
 
 interface TodoPageProps {
@@ -28,28 +29,25 @@ export default function TodoPage({ user }: TodoPageProps) {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [task, setTask] = useState("");
   const [loading, setLoading] = useState(true);
-
   useEffect(() => {
-    const fetchTodos = async () => {
-      if (!user) {
-        router.push("/login");
-        return;
-      }
+    if (user) {
+      const fetchTodos = async () => {
+        const { data: todos, error } = await supabase
+          .from("todos")
+          .select("*")
+          .is("deleted_at", null)
+          .eq("user_id", user.id);
 
-      const { data: todos, error } = await supabase
-        .from("todos")
-        .select("*")
-        .eq("user_id", user.id);
+        if (error) {
+          console.error(error.message);
+        } else {
+          setTodos(todos);
+        }
+        setLoading(false);
+      };
 
-      if (error) {
-        console.error(error.message);
-      } else {
-        setTodos(todos);
-      }
-      setLoading(false);
-    };
-
-    fetchTodos();
+      fetchTodos();
+    }
   }, [user, router]);
 
   const addTodo = async () => {
@@ -85,7 +83,10 @@ export default function TodoPage({ user }: TodoPageProps) {
   };
 
   const deleteTodo = async (id: number) => {
-    const { data, error } = await supabase.from("todos").delete().eq("id", id);
+    const { data, error } = await supabase
+      .from("todos")
+      .update({ deleted_at: new Date() })
+      .eq("id", id);
 
     if (error) {
       console.error("Error deleting todo:", error.message);
